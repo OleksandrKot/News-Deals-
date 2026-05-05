@@ -1,10 +1,15 @@
-FROM n8nio/n8n:latest
+FROM n8nio/n8n:latest-debian
 
 USER root
 
-RUN apk update && \
-    apk add --no-cache python3 py3-pip py3-numpy py3-scipy && \
-    pip3 install --break-system-packages matplotlib && \
-    rm -rf /var/cache/apk/*
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+    python3 \
+    python3-pip \
+    python3-numpy \
+    python3-scipy \
+    && pip3 install --break-system-packages matplotlib \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
 
 USER node
