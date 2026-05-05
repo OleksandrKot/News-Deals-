@@ -1,12 +1,9 @@
-FROM n8nio/n8n:latest-debian
+FROM n8nio/n8n:latest
 
 USER root
 
-# Fix Debian Buster EOL repos
-RUN sed -i 's|deb.debian.org|archive.debian.org|g' /etc/apt/sources.list && \
-    sed -i 's|security.debian.org|archive.debian.org|g' /etc/apt/sources.list && \
-    sed -i '/updates/d' /etc/apt/sources.list && \
-    apt-get update && \
+# Install Python dependencies
+RUN apt-get update && \
     apt-get install -y --no-install-recommends \
     python3 \
     python3-pip \
@@ -16,10 +13,9 @@ RUN sed -i 's|deb.debian.org|archive.debian.org|g' /etc/apt/sources.list && \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-USER node
+# Install custom n8n nodes as root (fixes permissions)
+RUN npm install -g @tavily/n8n-nodes-tavily n8n-nodes-htmlcsstopdf
 
-# Install custom n8n nodes
-RUN cd /usr/local/lib/node_modules/n8n && \
-    npm install @tavily/n8n-nodes-tavily n8n-nodes-htmlcsstopdf
+USER node
 
 CMD ["n8n"]
