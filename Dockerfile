@@ -1,21 +1,28 @@
+FROM node:20-alpine3.22 AS builder
+
+# Install Python and community nodes in builder stage
+RUN apk add --no-cache \
+    python3 \
+    py3-pip \
+    py3-numpy \
+    py3-scipy \
+    && pip3 install --break-system-packages matplotlib
+
+# Install community nodes
+RUN npm install -g @tavily/n8n-nodes-tavily n8n-nodes-htmlcsstopdf
+
+# Final stage - use official n8n image
 FROM n8nio/n8n:latest
 
 USER root
 
-# Install Python dependencies
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends \
-    python3 \
-    python3-pip \
-    python3-numpy \
-    python3-scipy \
-    python3-matplotlib \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/*
+# Copy Python from builder
+COPY --from=builder /usr/bin/python3 /usr/bin/python3
+COPY --from=builder /usr/lib/python3* /usr/lib/
+COPY --from=builder /usr/lib/libpython3* /usr/lib/
 
-# Install custom n8n nodes as root (fixes permissions)
-RUN npm install -g @tavily/n8n-nodes-tavily n8n-nodes-htmlcsstopdf
+# Copy community nodes from builder
+COPY --from=builder /usr/local/lib/node_modules/@tavily /usr/local/lib/node_modules/@tavily
+COPY --from=builder /usr/local/lib/node_modules/n8n-nodes-htmlcsstopdf /usr/local/lib/node_modules/n8n-nodes-htmlcsstopdf
 
 USER node
-
-CMD ["n8n"]
